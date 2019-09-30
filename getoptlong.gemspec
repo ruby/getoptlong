@@ -5,8 +5,8 @@ require "getoptlong/version"
 Gem::Specification.new do |spec|
   spec.name          = "getoptlong"
   spec.version       = GetoptLong::VERSION
-  spec.authors       = ["Hiroshi SHIBATA"]
-  spec.email         = ["hsbt@ruby-lang.org"]
+  spec.authors       = ["Yukihiro Matsumoto"]
+  spec.email         = ["matz@ruby-lang.org"]
 
   spec.summary       = %q{GetoptLong for Ruby}
   spec.description   = spec.summary
