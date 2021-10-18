@@ -5,8 +5,11 @@ opts = GetoptLong.new(
   ['--zzz', '-z', '--ccc', '-c', GetoptLong::NO_ARGUMENT]
 )
 opts.each do |opt, arg|
-  puts "#{opt} => #{arg}"
+  puts "#{opt}: #{arg}"
 end
+puts ARGV
+puts ARGV.size
+
 
 
 

@@ -11,20 +11,44 @@ class TestGetoptLong < Test::Unit::TestCase
     # Nothing yet.
   end
 
+  def verify_output(expected, output)
+    exp_entries = expected.dup
+    act_entries = output.split("\n")
+    # Last act_entry is argv size as a string.
+    argv_size = act_entries.pop.to_i
+    act_argv = act_entries.pop(argv_size)
+    # Last exp_entry is an array of expected argv strings.
+    exp_argv = exp_entries.pop
+    assert_equal(exp_argv, act_argv, 'ARGV')
+    assert_equal(exp_entries.size, act_entries.size, 'Entries')
+    i = 0
+    exp_entries.zip(act_entries) do |exp, act|
+      assert_equal(exp, act, "Entry #{i}")
+      i += 1
+    end
+  end
+
   def test_new_with_no_array
     GetoptLong.new
   end
 
   def test_no_options
-    output = `ruby test/test.rb`
-    assert_equal(output, '')
+    output = `ruby test/test.rb foo bar`
+    expected = [
+      %w[foo bar]
+    ]
+    verify_output(expected, output)
   end
 
   def test_required_argument
+    expected = [
+      '--xxx: arg',
+      %w[foo bar]
+    ]
     options = %w[--xxx --xx --x -x --aaa --aa --a -a]
     options.each do |option|
-      output = `ruby test/test.rb #{option} arg`
-      assert_equal("--xxx => arg\n", output)
+      output = `ruby test/test.rb foo #{option} arg bar`
+      verify_output(expected, output)
     end
   end
 
@@ -40,26 +64,38 @@ class TestGetoptLong < Test::Unit::TestCase
   # end
 
   def test_optional_argument
+    expected = [
+      '--yyy: arg',
+      %w[foo bar]
+    ]
     options = %w[--yyy --y --y -y --bbb --bb --b -b]
     options.each do |option|
-      output = `ruby test/test.rb #{option} arg`
-      assert_equal("--yyy => arg\n", output)
+      output = `ruby test/test.rb foo bar #{option} arg`
+      verify_output(expected, output)
     end
   end
 
   def test_optional_argument_missing
+    expected = [
+      '--yyy: ',
+      %w[foo bar]
+    ]
     options = %w[--yyy --y --y -y --bbb --bb --b -b]
     options.each do |option|
-      output = `ruby test/test.rb #{option}`
-      assert_equal("--yyy => \n", output)
+      output = `ruby test/test.rb foo bar #{option}`
+      verify_output(expected, output)
     end
   end
 
   def test_no_argument
+    expected = [
+      '--zzz: ',
+      %w[foo bar]
+    ]
     options = %w[--zzz --zz --z -z --ccc --cc --c -c]
     options.each do |option|
-      output = `ruby test/test.rb #{option}`
-      assert_equal("--zzz => \n", output)
+      output = `ruby test/test.rb foo #{option} bar`
+      verify_output(expected, output)
     end
   end
 
