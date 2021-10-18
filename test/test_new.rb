@@ -11,13 +11,24 @@ class TestGetoptLong < Test::Unit::TestCase
     # Nothing yet.
   end
 
+  # The target program is supposed to write:
+  #
+  # - One line for each option.
+  # - One line for each element in ARGV.
+  # - One line giving the count of ARGV elements.
+  #
+  # This is important because the test must know how to compare
+  # options against options and ARGV elements against ARGV elements.
+  #
   def verify_output(expected, output)
+    # Don't mess with the caller's data.
     exp_entries = expected.dup
-    act_entries = output.split("\n")
-    # Last act_entry is argv size as a string.
+    act_entries = output.dup.split("\n")
+    # The last act_entry is ARGV size as a string.
+    # Get the ARGV elements into act_argv.
     argv_size = act_entries.pop.to_i
     act_argv = act_entries.pop(argv_size)
-    # Last exp_entry is an array of expected argv strings.
+    # The last exp_entry is an array of expected argv strings.
     exp_argv = exp_entries.pop
     assert_equal(exp_argv, act_argv, 'ARGV')
     assert_equal(exp_entries.size, act_entries.size, 'Entries')
@@ -33,7 +44,7 @@ class TestGetoptLong < Test::Unit::TestCase
   end
 
   def test_no_options
-    output = `ruby test/test.rb foo bar`
+    output = `ruby test/options.rb foo bar`
     expected = [
       %w[foo bar]
     ]
@@ -47,7 +58,7 @@ class TestGetoptLong < Test::Unit::TestCase
     ]
     options = %w[--xxx --xx --x -x --aaa --aa --a -a]
     options.each do |option|
-      output = `ruby test/test.rb foo #{option} arg bar`
+      output = `ruby test/options.rb foo #{option} arg bar`
       verify_output(expected, output)
     end
   end
@@ -57,7 +68,7 @@ class TestGetoptLong < Test::Unit::TestCase
   #   options.each do |option|
   #     expected = "option `--xxx' requires an argument (GetoptLong::MissingArgument)"
   #     _, err = capture_subprocess_io do
-  #       `ruby test/test.rb --xxx`
+  #       `ruby test/options.rb --xxx`
   #     end
   #     assert_match(expected, err)
   #   end
@@ -70,7 +81,7 @@ class TestGetoptLong < Test::Unit::TestCase
     ]
     options = %w[--yyy --y --y -y --bbb --bb --b -b]
     options.each do |option|
-      output = `ruby test/test.rb foo bar #{option} arg`
+      output = `ruby test/options.rb foo bar #{option} arg`
       verify_output(expected, output)
     end
   end
@@ -82,7 +93,7 @@ class TestGetoptLong < Test::Unit::TestCase
     ]
     options = %w[--yyy --y --y -y --bbb --bb --b -b]
     options.each do |option|
-      output = `ruby test/test.rb foo bar #{option}`
+      output = `ruby test/options.rb foo bar #{option}`
       verify_output(expected, output)
     end
   end
@@ -94,7 +105,7 @@ class TestGetoptLong < Test::Unit::TestCase
     ]
     options = %w[--zzz --zz --z -z --ccc --cc --c -c]
     options.each do |option|
-      output = `ruby test/test.rb foo #{option} bar`
+      output = `ruby test/options.rb foo #{option} bar`
       verify_output(expected, output)
     end
   end
