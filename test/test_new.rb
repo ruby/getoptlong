@@ -44,7 +44,7 @@ class TestGetoptLong < Test::Unit::TestCase
   end
 
   def test_no_options
-    output = `ruby test/options.rb foo bar`
+    output = `ruby test/t.rb foo bar`
     expected = [
       %w[foo bar]
     ]
@@ -58,7 +58,7 @@ class TestGetoptLong < Test::Unit::TestCase
     ]
     options = %w[--xxx --xx --x -x --aaa --aa --a -a]
     options.each do |option|
-      output = `ruby test/options.rb foo #{option} arg bar`
+      output = `ruby test/t.rb foo #{option} arg bar`
       verify_output(expected, output)
     end
   end
@@ -68,7 +68,7 @@ class TestGetoptLong < Test::Unit::TestCase
   #   options.each do |option|
   #     expected = "option `--xxx' requires an argument (GetoptLong::MissingArgument)"
   #     _, err = capture_subprocess_io do
-  #       `ruby test/options.rb --xxx`
+  #       `ruby test/t.rb --xxx`
   #     end
   #     assert_match(expected, err)
   #   end
@@ -81,7 +81,7 @@ class TestGetoptLong < Test::Unit::TestCase
     ]
     options = %w[--yyy --y --y -y --bbb --bb --b -b]
     options.each do |option|
-      output = `ruby test/options.rb foo bar #{option} arg`
+      output = `ruby test/t.rb foo bar #{option} arg`
       verify_output(expected, output)
     end
   end
@@ -93,7 +93,7 @@ class TestGetoptLong < Test::Unit::TestCase
     ]
     options = %w[--yyy --y --y -y --bbb --bb --b -b]
     options.each do |option|
-      output = `ruby test/options.rb foo bar #{option}`
+      output = `ruby test/t.rb foo bar #{option}`
       verify_output(expected, output)
     end
   end
@@ -105,7 +105,7 @@ class TestGetoptLong < Test::Unit::TestCase
     ]
     options = %w[--zzz --zz --z -z --ccc --cc --c -c]
     options.each do |option|
-      output = `ruby test/options.rb foo #{option} bar`
+      output = `ruby test/t.rb foo #{option} bar`
       verify_output(expected, output)
     end
   end
