@@ -3,40 +3,27 @@ require 'getoptlong'
 
 class TestGetoptLong < Test::Unit::TestCase
 
-  def setup
-    # Nothing yet.
-  end
-
-  def teardown
-    # Nothing yet.
-  end
-
-  # The target program is supposed to write:
-  #
-  # - One line for each option.
-  # - One line for each element in ARGV.
-  # - One line giving the count of ARGV elements.
-  #
-  # This is important because the test must know how to compare
-  # options against options and ARGV elements against ARGV elements.
-  #
-  def verify_output(expected, output)
-    # Don't mess with the caller's data.
-    exp_entries = expected.dup
-    act_entries = output.dup.split("\n")
-    # The last act_entry is ARGV size as a string.
-    # Get the ARGV elements into act_argv.
-    argv_size = act_entries.pop.to_i
-    act_argv = act_entries.pop(argv_size)
-    # The last exp_entry is an array of expected argv strings.
-    exp_argv = exp_entries.pop
-    assert_equal(exp_argv, act_argv, 'ARGV')
-    assert_equal(exp_entries.size, act_entries.size, 'Entries')
-    i = 0
-    exp_entries.zip(act_entries) do |exp, act|
-      assert_equal(exp, act, "Entry #{i}")
-      i += 1
+  def verify(test_argv, expected_remaining_argv, expected_options)
+    # Save ARGV and replace it with a test ARGV.
+    argv_saved = ARGV
+    ARGV.replace(test_argv)
+    # Define options.
+    opts = GetoptLong.new(
+      ['--xxx', '-x', '--aaa', '-a', GetoptLong::REQUIRED_ARGUMENT],
+      ['--yyy', '-y', '--bbb', '-b', GetoptLong::OPTIONAL_ARGUMENT],
+      ['--zzz', '-z', '--ccc', '-c', GetoptLong::NO_ARGUMENT]
+    )
+    # Gather options.
+    actual_options = []
+    opts.each do |opt, arg|
+      actual_options << "#{opt}: #{arg}"
     end
+    # Save remaining test ARGV and restore original ARGV.
+    actual_remaining_argv = ARGV
+    ARGV.replace(argv_saved)
+    # Assert.
+    assert_equal(expected_remaining_argv, actual_remaining_argv, 'ARGV')
+    assert_equal(expected_options, actual_options, 'Options')
   end
 
   def test_new_with_no_array
@@ -44,22 +31,21 @@ class TestGetoptLong < Test::Unit::TestCase
   end
 
   def test_no_options
-    output = `ruby test/t.rb foo bar`
-    expected = [
-      %w[foo bar]
-    ]
-    verify_output(expected, output)
+    expected_options = []
+    expected_argv = %w[foo bar]
+    argv = %w[foo bar]
+    verify(argv, expected_argv, expected_options)
   end
 
   def test_required_argument
-    expected = [
-      '--xxx: arg',
-      %w[foo bar]
+    expected_options = [
+      '--xxx: arg'
     ]
+    expected_argv = %w[foo bar]
     options = %w[--xxx --xx --x -x --aaa --aa --a -a]
     options.each do |option|
-      output = `ruby test/t.rb foo #{option} arg bar`
-      verify_output(expected, output)
+      argv = ['foo', option, 'arg', 'bar']
+      verify(argv, expected_argv, expected_options)
     end
   end
 
@@ -75,38 +61,38 @@ class TestGetoptLong < Test::Unit::TestCase
   # end
 
   def test_optional_argument
-    expected = [
-      '--yyy: arg',
-      %w[foo bar]
+    expected_options = [
+      '--yyy: arg'
     ]
+    expected_argv = %w[foo bar]
     options = %w[--yyy --y --y -y --bbb --bb --b -b]
     options.each do |option|
-      output = `ruby test/t.rb foo bar #{option} arg`
-      verify_output(expected, output)
+      argv = ['foo', 'bar', option, 'arg']
+      verify(argv, expected_argv, expected_options)
     end
   end
 
   def test_optional_argument_missing
-    expected = [
-      '--yyy: ',
-      %w[foo bar]
+    expected_options = [
+      '--yyy: '
     ]
+    expected_argv = %w[foo bar]
     options = %w[--yyy --y --y -y --bbb --bb --b -b]
     options.each do |option|
-      output = `ruby test/t.rb foo bar #{option}`
-      verify_output(expected, output)
+      argv = ['foo', 'bar', option]
+      verify(argv, expected_argv, expected_options)
     end
   end
 
   def test_no_argument
-    expected = [
-      '--zzz: ',
-      %w[foo bar]
+    expected_options = [
+      '--zzz: '
     ]
+    expected_argv = %w[foo bar]
     options = %w[--zzz --zz --z -z --ccc --cc --c -c]
     options.each do |option|
-      output = `ruby test/t.rb foo #{option} bar`
-      verify_output(expected, output)
+      argv = ['foo', option, 'bar']
+      verify(argv, expected_argv, expected_options)
     end
   end
 
