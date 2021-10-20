@@ -49,16 +49,16 @@ class TestGetoptLong < Test::Unit::TestCase
     end
   end
 
-  # def test_required_argument_missing
-  #   options = %w[--xxx --xx --x -x --aaa --aa --a -a]
-  #   options.each do |option|
-  #     expected = "option `--xxx' requires an argument (GetoptLong::MissingArgument)"
-  #     _, err = capture_subprocess_io do
-  #       `ruby test/t.rb --xxx`
-  #     end
-  #     assert_match(expected, err)
-  #   end
-  # end
+  def test_required_argument_missing
+    options = %w[--xxx --xx --x -x --aaa --aa --a -a]
+    options.each do |option|
+      argv = [option]
+      e = assert_raises(GetoptLong::MissingArgument) do
+        verify(argv, [], [])
+      end
+      assert_match('requires an argument', e.message)
+    end
+  end
 
   def test_optional_argument
     expected_options = [
