@@ -26,10 +26,6 @@ class TestGetoptLong < Test::Unit::TestCase
     assert_equal(expected_options, actual_options, 'Options')
   end
 
-  def test_new_with_no_array
-    GetoptLong.new
-  end
-
   def test_no_options
     expected_options = []
     expected_argv = %w[foo bar]
