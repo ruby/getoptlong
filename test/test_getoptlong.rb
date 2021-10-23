@@ -49,7 +49,7 @@ class TestGetoptLong < Test::Unit::TestCase
     options = %w[--xxx --xx --x -x --aaa --aa --a -a]
     options.each do |option|
       argv = [option]
-      e = assert_raises(GetoptLong::MissingArgument) do
+      e = assert_raise(GetoptLong::MissingArgument) do
         verify(argv, [], [])
       end
       assert_match('requires an argument', e.message)
@@ -93,28 +93,28 @@ class TestGetoptLong < Test::Unit::TestCase
   end
 
   def test_new_with_empty_array
-    e = assert_raises(ArgumentError) do
+    e = assert_raise(ArgumentError) do
       GetoptLong.new([])
     end
     assert_match(/no argument-flag/, e.message)
   end
 
   def test_new_with_bad_array
-    e = assert_raises(ArgumentError) do
+    e = assert_raise(ArgumentError) do
       GetoptLong.new('foo')
     end
     assert_match(/option list contains non-Array argument/, e.message)
   end
 
   def test_new_with_empty_subarray
-    e = assert_raises(ArgumentError) do
+    e = assert_raise(ArgumentError) do
       GetoptLong.new([[]])
     end
     assert_match(/no argument-flag/, e.message)
   end
 
   def test_new_with_bad_subarray
-    e = assert_raises(ArgumentError) do
+    e = assert_raise(ArgumentError) do
       GetoptLong.new([1])
     end
     assert_match(/no option name/, e.message)
@@ -123,7 +123,7 @@ class TestGetoptLong < Test::Unit::TestCase
   def test_new_with_invalid_option
     invalid_options = %w[verbose -verbose -- +]
     invalid_options.each do |invalid_option|
-      e = assert_raises(ArgumentError, invalid_option.to_s) do
+      e = assert_raise(ArgumentError, invalid_option.to_s) do
         arguments = [
           [invalid_option, '-v', GetoptLong::NO_ARGUMENT]
         ]
@@ -136,7 +136,7 @@ class TestGetoptLong < Test::Unit::TestCase
   def test_new_with_invalid_alias
     invalid_aliases = %w[v - -- +]
     invalid_aliases.each do |invalid_alias|
-      e = assert_raises(ArgumentError, invalid_alias.to_s) do
+      e = assert_raise(ArgumentError, invalid_alias.to_s) do
         arguments = [
           ['--verbose', invalid_alias, GetoptLong::NO_ARGUMENT]
         ]
@@ -149,7 +149,7 @@ class TestGetoptLong < Test::Unit::TestCase
   def test_new_with_invalid_flag
     invalid_flags = ['foo']
     invalid_flags.each do |invalid_flag|
-      e = assert_raises(ArgumentError, invalid_flag.to_s) do
+      e = assert_raise(ArgumentError, invalid_flag.to_s) do
         arguments = [
           ['--verbose', '-v', invalid_flag]
         ]
