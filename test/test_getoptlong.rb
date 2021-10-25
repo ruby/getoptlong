@@ -13,6 +13,7 @@ class TestGetoptLong < Test::Unit::TestCase
       ['--yyy', '-y', '--bbb', '-b', GetoptLong::OPTIONAL_ARGUMENT],
       ['--zzz', '-z', '--ccc', '-c', GetoptLong::NO_ARGUMENT]
     )
+    opts.quiet = true
     # Gather options.
     actual_options = []
     opts.each do |opt, arg|
