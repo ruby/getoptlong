@@ -30,14 +30,15 @@
 # - Zero or more string <em>aliases</em> for the name.
 # - An <em>option type</em>.
 #
-# An option may be defined by calling singleton method GetoptLong.new.
+# Options may be defined by calling singleton method GetoptLong.new,
+# which returns a new \GetoptLong object.
 # Command-line options may then be processed by calling other methods
 # such as GetoptLong#each.
 #
 # === Option Name and Aliases
 #
 # In the array that defines an option,
-# the first element is the string the option name.
+# the first element is the string option name.
 # Often the name takes the 'long' form, beginning with two hyphens.
 #
 # The option name may have any number of aliases,
@@ -129,11 +130,10 @@
 #
 # ==== Option with Required Argument
 #
-# An option of type <tt>GetoptLong::REQUIRED_ARGUMENT</tt>:
+# An option of type <tt>GetoptLong::REQUIRED_ARGUMENT</tt>
 # must be followed by an argument, which is associated with that option:
 #
 #   $ ruby types.rb --xxx foo
-#
 #
 # Output:
 #
@@ -155,7 +155,7 @@
 #
 # ==== Option with Optional Argument
 #
-# An option of type <tt>GetoptLong::OPTIONAL_ARGUMENT</tt>:
+# An option of type <tt>GetoptLong::OPTIONAL_ARGUMENT</tt>
 # may be followed by an argument, which if given is associated with that option.
 #
 # If the option is last, it does not have an argument:
@@ -204,7 +204,7 @@
 # Before the processing, ARGV includes all words from the command line.
 # During processing, each found option is removed, along with its argument
 # if there is one.
-# After processing, each remaining element was neither an option
+# After processing, each remaining element  was neither an option
 # nor the argument for an option.
 #
 # File <tt>argv.rb</tt>:
