@@ -16,7 +16,7 @@
 #
 # A simple example: file <tt>simple.rb</tt>:
 #
-#   :include: ../doc/simple.rb
+#   :include: ../doc/getoptlong/simple.rb
 #
 # If you are somewhat familiar with command-line options,
 # you may want to skip to this
@@ -51,7 +51,7 @@
 #
 # File <tt>aliases.rb</tt>:
 #
-#   :include: ../doc/aliases.rb
+#   :include: ../doc/getoptlong/aliases.rb
 #
 # On the command line, an option may be cited by its name,
 # or by any of its aliases;
@@ -73,7 +73,7 @@
 #
 # File <tt>abbrev.rb</tt>:
 #
-#   :include: ../doc/abbrev.rb
+#   :include: ../doc/getoptlong/abbrev.rb
 #
 # Command line:
 #
@@ -103,10 +103,11 @@
 #   ["--xxx", ""]
 #   ["--xyz", ""]
 #
-# === Protected Options
+# === Treating Remaining Options as Arguments
 #
-# A command-line option that appears anywhere after the token <tt>--</tt>
-# is _protected_, and is not processed as an option:
+# A option-like token that appears in the command line
+# anywhere after the token <tt>--</tt> is treated as an ordinary argument,
+# and is not processed as an option:
 #
 #   $ ruby abbrev.rb --xxx --xyz -- --xxx --xyz
 #
@@ -122,7 +123,7 @@
 #
 # File <tt>types.rb</tt>:
 #
-#   :include: ../doc/types.rb
+#   :include: ../doc/getoptlong/types.rb
 #
 # Note that an option type has to do with the <em>option argument</em>
 # (whether it is required, optional, or forbidden),
@@ -209,7 +210,7 @@
 #
 # File <tt>argv.rb</tt>:
 #
-#   :include: ../doc/argv.rb
+#   :include: ../doc/getoptlong/argv.rb
 #
 # Command line:
 #
@@ -242,7 +243,7 @@
 #
 # File <tt>permute.rb</tt>:
 #
-#   :include: ../doc/permute.rb
+#   :include: ../doc/getoptlong/permute.rb
 #
 # Command line:
 #
@@ -265,7 +266,7 @@
 #
 # File <tt>require_order.rb</tt>:
 #
-#   :include: ../doc/require_order.rb
+#   :include: ../doc/getoptlong/require_order.rb
 #
 # Command line:
 #
@@ -286,7 +287,7 @@
 #
 # File <tt>return_in_order.rb</tt>:
 #
-#   :include: ../doc/return_in_order.rb
+#   :include: ../doc/getoptlong/return_in_order.rb
 #
 # Command line:
 #
@@ -307,7 +308,7 @@
 #
 # File <tt>fibonacci.rb</tt>:
 #
-#   :include: ../doc/fibonacci.rb
+#   :include: ../doc/getoptlong/fibonacci.rb
 #
 # Command line:
 #
@@ -403,7 +404,7 @@ class GetoptLong
   #
   # Example:
   #
-  #   :include: ../doc/simple.rb
+  #   :include: ../doc/getoptlong/simple.rb
   #
   # Raises an exception if:
   #
@@ -842,7 +843,7 @@ class GetoptLong
   #
   # Example:
   #
-  #   :include: ../doc/each.rb
+  #   :include: ../doc/getoptlong/each.rb
   #
   # Command line:
   #
