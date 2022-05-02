@@ -7,10 +7,10 @@
 # You may redistribute and/or modify this library under the same license
 # terms as Ruby.
 
-# \Class \GetoptLong provides command-line parsing both for options
+# \Class \GetoptLong provides parsing both for options
 # and for regular arguments.
 #
-# Using \GetoptLong, you can define command-line options for your program.
+# Using \GetoptLong, you can define options for your program.
 # The program can then capture and respond to whatever options
 # are included in the command that executes the program.
 #
@@ -18,7 +18,7 @@
 #
 #   :include: ../examples/getoptlong/simple.rb
 #
-# If you are somewhat familiar with command-line options,
+# If you are somewhat familiar with options,
 # you may want to skip to this
 # {full example}[#class-GetoptLong-label-Full+Example].
 #
@@ -32,7 +32,7 @@
 #
 # Options may be defined by calling singleton method GetoptLong.new,
 # which returns a new \GetoptLong object.
-# Command-line options may then be processed by calling other methods
+# Options may then be processed by calling other methods
 # such as GetoptLong#each.
 #
 # === Option Name and Aliases
@@ -53,7 +53,7 @@
 #
 #   :include: ../examples/getoptlong/aliases.rb
 #
-# On the command line, an option may be cited by its name,
+# An option may be cited by its name,
 # or by any of its aliases;
 # the parsed option always reports the name, not an alias:
 #
@@ -105,7 +105,7 @@
 #
 # === Treating Remaining Options as Arguments
 #
-# A option-like token that appears in the command line
+# A option-like token that appears
 # anywhere after the token <tt>--</tt> is treated as an ordinary argument,
 # and is not processed as an option:
 #
@@ -119,7 +119,7 @@
 # === Option Types
 #
 # Each option definition includes an option type,
-# which controls whether the option takes an argument on the command line.
+# which controls whether the option takes an argument.
 #
 # File <tt>types.rb</tt>:
 #
@@ -200,10 +200,9 @@
 # You can process options either with method #each and a block,
 # or with method #get.
 #
-# Before the processing, ARGV includes all words from the command line.
 # During processing, each found option is removed, along with its argument
 # if there is one.
-# After processing, each remaining element  was neither an option
+# After processing, each remaining element was neither an option
 # nor the argument for an option.
 #
 # File <tt>argv.rb</tt>:
@@ -224,8 +223,8 @@
 #
 # === Ordering
 #
-# There are three settings that control the way the command line
-# is interpreted:
+# There are three settings that control the way the options
+# are interpreted:
 #
 # - +PERMUTE+.
 # - +REQUIRE_ORDER+.
@@ -236,8 +235,8 @@
 #
 # ==== PERMUTE Ordering
 #
-# In the +PERMUTE+ ordering, command-line options and other, non-option,
-# command-line arguments may appear in any order and any mixture.
+# In the +PERMUTE+ ordering, options and other, non-option,
+# arguments may appear in any order and any mixture.
 #
 # File <tt>permute.rb</tt>:
 #
@@ -259,7 +258,7 @@
 # ==== REQUIRE_ORDER Ordering
 #
 # In the +REQUIRE_ORDER+ ordering, all options precede all non-options;
-# that is, each command-line word after the first non-option word
+# that is, each word after the first non-option word
 # is treated as a non-option word (even if it begins with a hyphen).
 #
 # File <tt>require_order.rb</tt>:
@@ -278,7 +277,7 @@
 #
 # ==== RETURN_IN_ORDER Ordering
 #
-# In the +RETURN_IN_ORDER+ ordering, every command-line word is treated as an option.
+# In the +RETURN_IN_ORDER+ ordering, every word is treated as an option.
 # A word that begins with a hyphen (or two) is treated in the usual way;
 # a word +word+ that does not so begin is treated as an option
 # whose name is an empty string, and whose value is +word+.
