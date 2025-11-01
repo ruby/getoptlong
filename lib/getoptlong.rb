@@ -813,11 +813,7 @@ class GetoptLong
         # This is an invalid option.
         # 1003.2 specifies the format of this message.
         #
-        if ENV.include?('POSIXLY_CORRECT')
-          set_error(InvalidOption, "invalid option -- #{ch}")
-        else
-          set_error(InvalidOption, "invalid option -- #{ch}")
-        end
+        set_error(InvalidOption, "invalid option -- #{ch}")
       end
     else
       #
