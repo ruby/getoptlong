@@ -857,6 +857,8 @@ class GetoptLong
   #   Remaining ARGV: ["Foo"]
   #
   def each
+    return to_enum(__method__) unless block_given?
+
     loop do
       option_name, option_argument = get_option
       break if option_name == nil
