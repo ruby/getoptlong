@@ -542,50 +542,37 @@ class GetoptLong
       end
 
       #
-      # Find an argument flag and it set to `argument_flag'.
+      # Partition the arguments into argument flags and option names.
       #
-      argument_flag = nil
-      arg.each do |i|
-        if ARGUMENT_FLAGS.include?(i)
-          if argument_flag != nil
-            raise ArgumentError, "too many argument-flags"
-          end
-          argument_flag = i
+      flags, opts = arg.each.partition { |flag| ARGUMENT_FLAGS.include?(flag) }
+
+      #
+      # Handle obvious errors before iterating.
+      #
+      raise ArgumentError, "no argument-flag"        if flags.empty?
+      raise ArgumentError, "too many argument-flags" if flags.size > 1
+      raise ArgumentError, "no option name"          if opts.empty?
+
+      #
+      # Validate options.
+      #
+      opts.each do |i|
+        unless /\A-([^-]|-.+)\z/.match?(i)
+          raise ArgumentError, "an invalid option `#{i}'"
+        end
+        if @canonical_names.include?(i)
+          raise ArgumentError, "option redefined `#{i}'"
         end
       end
 
-      raise ArgumentError, "no argument-flag" if argument_flag == nil
-
-      canonical_name = nil
-      arg.each do |i|
-        #
-        # Check an option name.
-        #
-        next if i == argument_flag
-        begin
-          if !i.is_a?(String) || i !~ /\A-([^-]|-.+)\z/
-            raise ArgumentError, "an invalid option `#{i}'"
-          end
-          if (@canonical_names.include?(i))
-            raise ArgumentError, "option redefined `#{i}'"
-          end
-        rescue
-          @canonical_names.clear
-          @argument_flags.clear
-          raise
-        end
-
-        #
-        # Register the option (`i') to the `@canonical_names' and
-        # `@canonical_names' Hashes.
-        #
-        if canonical_name == nil
-          canonical_name = i
-        end
-        @canonical_names[i] = canonical_name
-        @argument_flags[i] = argument_flag
+      #
+      # Register the option aliases to the `@canonical_names' and
+      # `@argument_flags' Hashes.
+      #
+      opts.each do |name|
+        @canonical_names[name] = opts.first
+        @argument_flags[name] = flags.first
       end
-      raise ArgumentError, "no option name" if canonical_name == nil
     end
     return self
   end
