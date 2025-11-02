@@ -537,8 +537,8 @@ class GetoptLong
     @argument_flags.clear
 
     arguments.each do |arg|
-      if !arg.is_a?(Array)
-       raise ArgumentError, "the option list contains non-Array argument"
+      unless defined?(arg.each)
+        raise ArgumentError, "option list must be iterable `#{arg.inspect}'"
       end
 
       #
