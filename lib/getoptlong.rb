@@ -701,6 +701,7 @@ class GetoptLong
     #
     if 0 < @rest_singles.length
       argument = '-' + @rest_singles
+      @rest_singles = ''
     else
       if @ordering == PERMUTE
         while !(argv.empty? || /\A-./.match?(argv.first))
@@ -725,7 +726,7 @@ class GetoptLong
     #
     # Check for long and short options.
     #
-    arg_match = /\A(?:(?<end>--)|(?<option>--[^=]+)(?:=(?<option_argument>.*))?|(?<flag>-(?<char>.))(?<flag_rest>.*)|(?<other>.*))\z/m.match(argument)
+    arg_match = /\A(?:(?<end>--)|(?<option>--[^=]+)(?:=(?<option_argument>.*))?|(?<flag>-(?<char>.))(?<flag_rest>.+)?|(?<other>.*))\z/m.match(argument)
 
     case arg_match
     in MatchData[option: String => option_name, option_argument:]
@@ -772,38 +773,32 @@ class GetoptLong
                   "option `#{option_name}' doesn't allow an argument")
       end
 
-    in MatchData[flag: String => option_name, char: String => ch, flag_rest:]
+    in MatchData[flag: String => option_name, char: String => ch,
+                 flag_rest: option_argument]
       #
       # This is a short style option, which start with `-' (not `--').
       # Short options may be catenated (e.g. `-l -g' is equivalent to
       # `-lg').
       #
-      @rest_singles = flag_rest
-
       if @canonical_names.include?(option_name)
         #
         # The option `option_name' is found in `@canonical_names'.
         # Check its argument.
         #
         if @argument_flags[option_name] == REQUIRED_ARGUMENT
-          if 0 < @rest_singles.length
-            option_argument = @rest_singles
-            @rest_singles = ''
-          elsif !argv.empty?
-            option_argument = argv.shift
-          else
+          option_argument ||= argv.shift
+
+          unless option_argument
             # 1003.2 specifies the format of this message.
             set_error(MissingArgument, "option requires an argument -- #{ch}")
           end
         elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
-          if 0 < @rest_singles.length
-            option_argument = @rest_singles
-            @rest_singles = ''
-          elsif !(argv.empty? || /\A-./.match?(argv.first))
+          unless option_argument || argv.empty? || /\A-./.match?(argv.first)
             option_argument = argv.shift
-          else
-            option_argument = ''
           end
+          option_argument ||= ''
+        elsif option_argument
+          @rest_singles = option_argument
         end
       else
         #
