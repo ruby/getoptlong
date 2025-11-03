@@ -689,6 +689,14 @@ class GetoptLong
     end
 
     #
+    # @rest_singles might start with a '-', which would interfere with later
+    # checks.
+    #
+    if @rest_singles.start_with?(?-)
+      set_error(InvalidOption, "invalid option -- -")
+    end
+
+    #
     # Get next option argument.
     #
     if 0 < @rest_singles.length
@@ -719,7 +727,7 @@ class GetoptLong
     # Check the special argument `--'.
     # `--' indicates the end of the option list.
     #
-    if argument == '--' && @rest_singles.length == 0
+    if argument == '--'
       terminate
       return nil
     end
@@ -727,7 +735,7 @@ class GetoptLong
     #
     # Check for long and short options.
     #
-    if argument =~ /\A(--[^=]+)/ && @rest_singles.length == 0
+    if argument =~ /\A(--[^=]+)/
       #
       # This is a long style option, which start with `--'.
       #
