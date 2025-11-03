@@ -725,11 +725,13 @@ class GetoptLong
     #
     # Check for long and short options.
     #
-    if argument =~ /\A(--[^=]+)/
+    arg_match = /\A(?:(?<end>--)|(?<option>--[^=]+)(?:=(?<option_argument>.*))?|(?<flag>-(?<char>.))(?<flag_rest>.*)|(?<other>.*))\z/m.match(argument)
+
+    case arg_match
+    in MatchData[option: String => pattern, option_argument:]
       #
       # This is a long style option, which start with `--'.
       #
-      pattern = $1
       if @canonical_names.include?(pattern)
         option_name = pattern
       else
@@ -755,34 +757,29 @@ class GetoptLong
       # Check an argument to the option.
       #
       if @argument_flags[option_name] == REQUIRED_ARGUMENT
-        if argument =~ /=(.*)/m
-          option_argument = $1
-        elsif !argv.empty?
-          option_argument = argv.shift
-        else
+        option_argument ||= argv.shift
+
+        unless option_argument
           set_error(MissingArgument,
                     "option `#{argument}' requires an argument")
         end
       elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
-        if argument =~ /=(.*)/m
-          option_argument = $1
-        elsif !(argv.empty? || /\A-./.match?(argv.first))
+        unless option_argument || argv.empty? || /\A-./.match?(argv.first)
           option_argument = argv.shift
-        else
-          option_argument = ''
         end
-      elsif argument =~ /=(.*)/m
+        option_argument ||= ''
+      elsif option_argument
         set_error(NeedlessArgument,
                   "option `#{option_name}' doesn't allow an argument")
       end
 
-    elsif argument =~ /\A(-(.))(.*)/m
+    in MatchData[flag: String => option_name, char: String => ch, flag_rest:]
       #
       # This is a short style option, which start with `-' (not `--').
       # Short options may be catenated (e.g. `-l -g' is equivalent to
       # `-lg').
       #
-      option_name, ch, @rest_singles = $1, $2, $3
+      @rest_singles = flag_rest
 
       if @canonical_names.include?(option_name)
         #
