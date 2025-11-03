@@ -715,20 +715,18 @@ class GetoptLong
     end
 
     #
-    # `--' indicates the end of the option list.
-    # nil  indicates that argv was empty.
-    #
-    if argument == '--' || argument.nil?
-      terminate
-      return nil
-    end
-
-    #
     # Check for long and short options.
     #
     arg_match = /\A(?:(?<end>--)|(?<option>--[^=]+)(?:=(?<option_argument>.*))?|(?<flag>-(?<char>.))(?<flag_rest>.+)?|(?<other>.*))\z/m.match(argument)
 
     case arg_match
+    in nil | MatchData[end: '--']
+      #
+      # `--' indicates the end of the option list.
+      # nil  indicates that argv was empty.
+      #
+      terminate
+      return
     in MatchData[option: String => option_name, option_argument:]
       #
       # This is a long style option, which start with `--'.
