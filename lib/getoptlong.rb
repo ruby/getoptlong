@@ -701,16 +701,9 @@ class GetoptLong
     #
     if 0 < @rest_singles.length
       argument = '-' + @rest_singles
-    elsif argv.empty?
-      terminate
-      return nil
     elsif @ordering == PERMUTE
       while !(argv.empty? || /\A-./.match?(argv.first))
         @non_option_arguments.push(argv.shift)
-      end
-      if argv.empty?
-        terminate
-        return nil
       end
       argument = argv.shift
     elsif @ordering == REQUIRE_ORDER
@@ -724,10 +717,10 @@ class GetoptLong
     end
 
     #
-    # Check the special argument `--'.
     # `--' indicates the end of the option list.
+    # nil  indicates that argv was empty.
     #
-    if argument == '--'
+    if argument == '--' || argument.nil?
       terminate
       return nil
     end
