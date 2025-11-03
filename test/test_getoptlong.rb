@@ -50,6 +50,18 @@ class TestGetoptLong < Test::Unit::TestCase
     end
   end
 
+  def test_required_argument_assign
+    expected_options = [
+      '--xxx: arg'
+    ]
+    expected_argv = %w[foo bar]
+    options = %w[--xxx --xx --x --aaa --aa --a]
+    options.each do |option|
+      argv = ['foo', "#{option}=arg", 'bar']
+      verify(argv, expected_argv, expected_options)
+    end
+  end
+
   def test_required_argument_missing
     options = %w[--xxx --xx --x -x --aaa --aa --a -a]
     options.each do |option|
@@ -69,6 +81,18 @@ class TestGetoptLong < Test::Unit::TestCase
     options = %w[--yyy --y --y -y --bbb --bb --b -b]
     options.each do |option|
       argv = ['foo', 'bar', option, 'arg']
+      verify(argv, expected_argv, expected_options)
+    end
+  end
+
+  def test_optional_argument_assign
+    expected_options = [
+      '--yyy: arg'
+    ]
+    expected_argv = %w[foo bar]
+    options = %w[--yyy --y --y --bbb --bb --b]
+    options.each do |option|
+      argv = ['foo', 'bar', "#{option}=arg"]
       verify(argv, expected_argv, expected_options)
     end
   end
