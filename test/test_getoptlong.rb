@@ -104,7 +104,7 @@ class TestGetoptLong < Test::Unit::TestCase
     e = assert_raise(ArgumentError) do
       GetoptLong.new('foo')
     end
-    assert_match(/option list contains non-Array argument/, e.message)
+    assert_match(/option list must be iterable/, e.message)
   end
 
   def test_new_with_empty_subarray
