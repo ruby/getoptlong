@@ -728,18 +728,17 @@ class GetoptLong
     arg_match = /\A(?:(?<end>--)|(?<option>--[^=]+)(?:=(?<option_argument>.*))?|(?<flag>-(?<char>.))(?<flag_rest>.*)|(?<other>.*))\z/m.match(argument)
 
     case arg_match
-    in MatchData[option: String => pattern, option_argument:]
+    in MatchData[option: String => option_name, option_argument:]
       #
       # This is a long style option, which start with `--'.
       #
-      if @canonical_names.include?(pattern)
-        option_name = pattern
-      else
+      unless @canonical_names.include?(option_name)
         #
         # The option `option_name' is not registered in `@canonical_names'.
         # It may be an abbreviated.
         #
         matches = []
+        pattern = option_name
         @canonical_names.each_key do |key|
           if key.index(pattern) == 0
             option_name = key
