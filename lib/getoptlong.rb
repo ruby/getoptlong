@@ -701,18 +701,15 @@ class GetoptLong
     #
     if 0 < @rest_singles.length
       argument = '-' + @rest_singles
-    elsif @ordering == PERMUTE
-      while !(argv.empty? || /\A-./.match?(argv.first))
-        @non_option_arguments.push(argv.shift)
-      end
-      argument = argv.shift
-    elsif @ordering == REQUIRE_ORDER
-      unless /\A-./.match?(argv.first)
+    else
+      if @ordering == PERMUTE
+        while !(argv.empty? || /\A-./.match?(argv.first))
+          @non_option_arguments.push(argv.shift)
+        end
+      elsif @ordering == REQUIRE_ORDER && !/\A-./.match?(argv.first)
         terminate
         return nil
       end
-      argument = argv.shift
-    else
       argument = argv.shift
     end
 
