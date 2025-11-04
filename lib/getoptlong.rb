@@ -395,6 +395,8 @@ class GetoptLong
   class MissingArgument  < Error; end
   class InvalidOption    < Error; end
 
+  attr_accessor :argv, :env
+
   #
   # Returns a new \GetoptLong object based on the given +arguments+.
   # See {Options}[#class-GetoptLong-label-Options].
@@ -409,11 +411,11 @@ class GetoptLong
   # - Any option name or alias is not a string.
   # - Any option type is invalid.
   #
-  def initialize(*arguments)
+  def initialize(*arguments, argv: ARGV, env: ENV)
     #
     # Current ordering.
     #
-    if ENV.include?('POSIXLY_CORRECT')
+    if env.include?('POSIXLY_CORRECT')
       @ordering = REQUIRE_ORDER
     else
       @ordering = PERMUTE
@@ -467,6 +469,9 @@ class GetoptLong
     if 0 < arguments.length
       set_options(*arguments)
     end
+
+    self.argv = argv
+    self.env  = env
   end
 
   # Sets the ordering; see {Ordering}[#class-GetoptLong-label-Ordering];
@@ -502,7 +507,7 @@ class GetoptLong
     if !ORDERINGS.include?(ordering)
       raise ArgumentError, "invalid ordering `#{ordering}'"
     end
-    if ordering == PERMUTE && ENV.include?('POSIXLY_CORRECT')
+    if ordering == PERMUTE && env.include?('POSIXLY_CORRECT')
       @ordering = REQUIRE_ORDER
     else
       @ordering = ordering
@@ -614,9 +619,7 @@ class GetoptLong
     raise RuntimeError, "an error has occurred" if @error != nil
 
     @status = STATUS_TERMINATED
-    @non_option_arguments.reverse_each do |argument|
-      ARGV.unshift(argument)
-    end
+    argv.unshift(*@non_option_arguments)
 
     @canonical_names = nil
     @argument_flags = nil
@@ -672,158 +675,99 @@ class GetoptLong
   # Returns +nil+ if there are no more options.
   #
   def get
-    option_name, option_argument = nil, ''
+    return                   if error? || terminated?
+    @status = STATUS_STARTED if @status == STATUS_YET
 
     #
-    # Check status.
+    # Get next option.
     #
-    return nil if @error != nil
-    case @status
-    when STATUS_YET
-      @status = STATUS_STARTED
-    when STATUS_TERMINATED
-      return nil
-    end
-
+    case @rest_singles
     #
-    # Get next option argument.
+    # If `@rest_singles` is empty, we have no short style options from the last
+    # iteration left over, so we process the next argument.
     #
-    if 0 < @rest_singles.length
-      argument = '-' + @rest_singles
-    elsif (ARGV.length == 0)
-      terminate
-      return nil
-    elsif @ordering == PERMUTE
-      while 0 < ARGV.length && ARGV[0] !~ /\A-./
-        @non_option_arguments.push(ARGV.shift)
+    when ''
+      if @ordering == REQUIRE_ORDER && /\A[^-]/.match?(argv.first)
+        terminate and return
       end
-      if ARGV.length == 0
-        terminate
-        return nil
+      if @ordering == PERMUTE
+        @non_option_arguments.push(argv.shift) while /\A[^-]/.match?(argv.first)
       end
-      argument = ARGV.shift
-    elsif @ordering == REQUIRE_ORDER
-      if (ARGV[0] !~ /\A-./)
-        terminate
-        return nil
-      end
-      argument = ARGV.shift
+      argument = argv.shift
+    #
+    # Error if `@rest_singles` starts with a '-', because it would interfere
+    # with later checks.
+    #
+    when /\A-/
+      raise_invalid_option char: ?-
     else
-      argument = ARGV.shift
+      argument = '-' + @rest_singles
+      @rest_singles = ''
     end
 
     #
-    # Check the special argument `--'.
+    # Extract end-of-arguments, long and short options, or non-options from
+    # the argument.
+    #
+    arg_match = /\A(?:(?<end>--)|(?<option>--[^=]+)(?:=(?<option_argument>.*))?|(?<option>-(?<char>.))(?<option_argument>.+)?|(?<other>.*))\z/m.match(argument)
+
+    case arg_match
+    #
     # `--' indicates the end of the option list.
+    # nil  indicates that argv was empty.
     #
-    if argument == '--' && @rest_singles.length == 0
-      terminate
-      return nil
-    end
+    in nil | MatchData[end: '--']
+      terminate and return
+    #
+    # char is `nil`:  This is a long style option, which start with `--'.
+    # char is String: This is a short style option, which start with `-'.
+    #
+    in MatchData[option: String => option_name, option_argument:, char:]
+      long_option = char.nil?
+      unless @canonical_names.include?(option_name)
+        raise_invalid_option(char:) unless long_option
 
-    #
-    # Check for long and short options.
-    #
-    if argument =~ /\A(--[^=]+)/ && @rest_singles.length == 0
-      #
-      # This is a long style option, which start with `--'.
-      #
-      pattern = $1
-      if @canonical_names.include?(pattern)
-        option_name = pattern
-      else
         #
         # The option `option_name' is not registered in `@canonical_names'.
-        # It may be an abbreviated.
+        # It may be an abbreviation.
         #
-        matches = []
-        @canonical_names.each_key do |key|
-          if key.index(pattern) == 0
-            option_name = key
-            matches << key
-          end
-        end
-        if 2 <= matches.length
-          set_error(AmbiguousOption, "option `#{argument}' is ambiguous between #{matches.join(', ')}")
-        elsif matches.length == 0
-          set_error(InvalidOption, "unrecognized option `#{argument}'")
-        end
+        matches = @canonical_names.each_key
+                                  .select { |key| key.start_with?(option_name) }
+
+        raise_invalid_option   option: option_name           if matches.empty?
+        raise_ambiguous_option matches:, option: option_name if matches.size > 1
+
+        option_name = matches.first
       end
 
       #
-      # Check an argument to the option.
+      # Process a possible argument to the option.
       #
       if @argument_flags[option_name] == REQUIRED_ARGUMENT
-        if argument =~ /=(.*)/m
-          option_argument = $1
-        elsif 0 < ARGV.length
-          option_argument = ARGV.shift
-        else
-          set_error(MissingArgument,
-                    "option `#{argument}' requires an argument")
-        end
+        option_argument ||= argv.shift
+
+        raise_missing_argument char:, option: option_name unless option_argument
       elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
-        if argument =~ /=(.*)/m
-          option_argument = $1
-        elsif 0 < ARGV.length && ARGV[0] !~ /\A-./
-          option_argument = ARGV.shift
-        else
-          option_argument = ''
-        end
-      elsif argument =~ /=(.*)/m
-        set_error(NeedlessArgument,
-                  "option `#{option_name}' doesn't allow an argument")
+        option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
+      #
+      # The only option left is NO_ARGUMENT. Error if one was given.
+      #
+      elsif option_argument
+        raise_needless_argument option: option_name if long_option
+        #
+        # Short options may be concatenated (e.g. `-l -g' is equivalent to
+        # `-lg').
+        #
+        @rest_singles = option_argument
       end
 
-    elsif argument =~ /\A(-(.))(.*)/m
-      #
-      # This is a short style option, which start with `-' (not `--').
-      # Short options may be catenated (e.g. `-l -g' is equivalent to
-      # `-lg').
-      #
-      option_name, ch, @rest_singles = $1, $2, $3
-
-      if @canonical_names.include?(option_name)
-        #
-        # The option `option_name' is found in `@canonical_names'.
-        # Check its argument.
-        #
-        if @argument_flags[option_name] == REQUIRED_ARGUMENT
-          if 0 < @rest_singles.length
-            option_argument = @rest_singles
-            @rest_singles = ''
-          elsif 0 < ARGV.length
-            option_argument = ARGV.shift
-          else
-            # 1003.2 specifies the format of this message.
-            set_error(MissingArgument, "option requires an argument -- #{ch}")
-          end
-        elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
-          if 0 < @rest_singles.length
-            option_argument = @rest_singles
-            @rest_singles = ''
-          elsif 0 < ARGV.length && ARGV[0] !~ /\A-./
-            option_argument = ARGV.shift
-          else
-            option_argument = ''
-          end
-        end
-      else
-        #
-        # This is an invalid option.
-        # 1003.2 specifies the format of this message.
-        #
-        set_error(InvalidOption, "invalid option -- #{ch}")
-      end
+      return @canonical_names[option_name], option_argument
     else
       #
-      # This is a non-option argument.
-      # Only RETURN_IN_ORDER fell into here.
+      # This is a non-option argument. Only RETURN_IN_ORDER fell into here.
       #
       return '', argument
     end
-
-    return @canonical_names[option_name], option_argument
   end
   alias get_option get
 
@@ -860,4 +804,34 @@ class GetoptLong
     end
   end
   alias each_option each
+
+  private
+
+  def raise_ambiguous_option(option:, matches:)
+    set_error(AmbiguousOption,
+              "option `#{option}' is ambiguous between #{matches.join(', ')}")
+  end
+
+  def raise_invalid_option(**opts)
+    msg = case opts
+          # 1003.2 specifies the format of this message.
+          in { char:   String => chr } then "invalid option -- #{chr}"
+          in { option: String => opt } then "unrecognized option `#{opt}'"
+          end
+    set_error(InvalidOption, msg)
+  end
+
+  def raise_missing_argument(**opts)
+    msg =
+      case opts
+      # 1003.2 specifies the format of this message.
+      in { char:   String => chr } then "option requires an argument -- #{chr}"
+      in { option: String => opt } then "option `#{opt}' requires an argument"
+      end
+    set_error(MissingArgument, msg)
+  end
+
+  def raise_needless_argument(option:)
+    set_error(NeedlessArgument, "option `#{option}' doesn't allow an argument")
+  end
 end
