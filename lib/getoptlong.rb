@@ -771,29 +771,28 @@ class GetoptLong
       # Short options may be catenated (e.g. `-l -g' is equivalent to
       # `-lg').
       #
-      if @canonical_names.include?(option_name)
-        #
-        # The option `option_name' is found in `@canonical_names'.
-        # Check its argument.
-        #
-        if @argument_flags[option_name] == REQUIRED_ARGUMENT
-          option_argument ||= argv.shift
-
-          unless option_argument
-            # 1003.2 specifies the format of this message.
-            set_error(MissingArgument, "option requires an argument -- #{ch}")
-          end
-        elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
-          option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
-        elsif option_argument
-          @rest_singles = option_argument
-        end
-      else
+      unless @canonical_names.include?(option_name)
         #
         # This is an invalid option.
         # 1003.2 specifies the format of this message.
         #
         set_error(InvalidOption, "invalid option -- #{ch}")
+      end
+      #
+      # The option `option_name' is found in `@canonical_names'.
+      # Check its argument.
+      #
+      if @argument_flags[option_name] == REQUIRED_ARGUMENT
+        option_argument ||= argv.shift
+
+        unless option_argument
+          # 1003.2 specifies the format of this message.
+          set_error(MissingArgument, "option requires an argument -- #{ch}")
+        end
+      elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
+        option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
+      elsif option_argument
+        @rest_singles = option_argument
       end
     else
       #
