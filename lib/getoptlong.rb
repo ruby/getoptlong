@@ -699,7 +699,7 @@ class GetoptLong
     # with later checks.
     #
     when /\A-/
-      set_error(InvalidOption, "invalid option -- -")
+      raise_invalid_option char: ?-
     else
       argument = '-' + @rest_singles
       @rest_singles = ''
@@ -725,11 +725,7 @@ class GetoptLong
     in MatchData[option: String => option_name, option_argument:, char:]
       long_option = char.nil?
       unless @canonical_names.include?(option_name)
-        #
-        # This is an invalid option.
-        # 1003.2 specifies the format of this message.
-        #
-        set_error(InvalidOption, "invalid option -- #{char}") unless long_option
+        raise_invalid_option(char:) unless long_option
 
         #
         # The option `option_name' is not registered in `@canonical_names'.
@@ -738,11 +734,9 @@ class GetoptLong
         matches = @canonical_names.each_key
                                   .select { |key| key.start_with?(option_name) }
 
-        if matches.size > 1
-          set_error(AmbiguousOption, "option `#{argument}' is ambiguous between #{matches.join(', ')}")
-        elsif matches.empty?
-          set_error(InvalidOption, "unrecognized option `#{argument}'")
-        end
+        raise_invalid_option   option: option_name           if matches.empty?
+        raise_ambiguous_option matches:, option: option_name if matches.size > 1
+
         option_name = matches.first
       end
 
@@ -752,24 +746,14 @@ class GetoptLong
       if @argument_flags[option_name] == REQUIRED_ARGUMENT
         option_argument ||= argv.shift
 
-        unless option_argument
-          if long_option
-            set_error(MissingArgument,
-                      "option `#{option_name}' requires an argument")
-          end
-          # 1003.2 specifies the format of this message.
-          set_error(MissingArgument, "option requires an argument -- #{char}")
-        end
+        raise_missing_argument char:, option: option_name unless option_argument
       elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
         option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
       #
       # The only option left is NO_ARGUMENT. Error if one was given.
       #
       elsif option_argument
-        if long_option
-          set_error(NeedlessArgument,
-                    "option `#{option_name}' doesn't allow an argument")
-        end
+        raise_needless_argument option: option_name if long_option
         #
         # Short options may be concatenated (e.g. `-l -g' is equivalent to
         # `-lg').
@@ -820,4 +804,34 @@ class GetoptLong
     end
   end
   alias each_option each
+
+  private
+
+  def raise_ambiguous_option(option:, matches:)
+    set_error(AmbiguousOption,
+              "option `#{option}' is ambiguous between #{matches.join(', ')}")
+  end
+
+  def raise_invalid_option(**opts)
+    msg = case opts
+          # 1003.2 specifies the format of this message.
+          in { char:   String => chr } then "invalid option -- #{chr}"
+          in { option: String => opt } then "unrecognized option `#{opt}'"
+          end
+    set_error(InvalidOption, msg)
+  end
+
+  def raise_missing_argument(**opts)
+    msg =
+      case opts
+      # 1003.2 specifies the format of this message.
+      in { char:   String => chr } then "option requires an argument -- #{chr}"
+      in { option: String => opt } then "option `#{opt}' requires an argument"
+      end
+    set_error(MissingArgument, msg)
+  end
+
+  def raise_needless_argument(option:)
+    set_error(NeedlessArgument, "option `#{option}' doesn't allow an argument")
+  end
 end
