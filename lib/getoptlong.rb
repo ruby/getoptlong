@@ -726,11 +726,19 @@ class GetoptLong
       #
       terminate
       return
-    in MatchData[option: String => option_name, option_argument:, char: nil]
+    in MatchData[option: String => option_name, option_argument:, char:]
       #
-      # This is a long style option, which start with `--'.
+      # char is `nil`:  This is a long style option, which start with `--'.
+      # char is String: This is a short style option, which start with `-'.
       #
+      long_option = char.nil?
       unless @canonical_names.include?(option_name)
+        #
+        # This is an invalid option.
+        # 1003.2 specifies the format of this message.
+        #
+        set_error(InvalidOption, "invalid option -- #{char}") unless long_option
+
         #
         # The option `option_name' is not registered in `@canonical_names'.
         # It may be an abbreviated.
@@ -754,44 +762,24 @@ class GetoptLong
         option_argument ||= argv.shift
 
         unless option_argument
-          set_error(MissingArgument,
-                    "option `#{argument}' requires an argument")
-        end
-      elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
-        option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
-      elsif option_argument
-        set_error(NeedlessArgument,
-                  "option `#{option_name}' doesn't allow an argument")
-      end
-
-    in MatchData[option: String => option_name, option_argument:,
-                 char: String => char]
-      #
-      # This is a short style option, which start with `-' (not `--').
-      # Short options may be catenated (e.g. `-l -g' is equivalent to
-      # `-lg').
-      #
-      unless @canonical_names.include?(option_name)
-        #
-        # This is an invalid option.
-        # 1003.2 specifies the format of this message.
-        #
-        set_error(InvalidOption, "invalid option -- #{char}")
-      end
-      #
-      # The option `option_name' is found in `@canonical_names'.
-      # Check its argument.
-      #
-      if @argument_flags[option_name] == REQUIRED_ARGUMENT
-        option_argument ||= argv.shift
-
-        unless option_argument
+          if long_option
+            set_error(MissingArgument,
+                      "option `#{option_name}' requires an argument")
+          end
           # 1003.2 specifies the format of this message.
           set_error(MissingArgument, "option requires an argument -- #{char}")
         end
       elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
         option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
       elsif option_argument
+        if long_option
+          set_error(NeedlessArgument,
+                    "option `#{option_name}' doesn't allow an argument")
+        end
+        #
+        # Short options may be concatenated (e.g. `-l -g' is equivalent to
+        # `-lg').
+        #
         @rest_singles = option_argument
       end
     else
