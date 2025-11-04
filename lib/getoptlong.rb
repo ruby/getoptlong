@@ -675,8 +675,6 @@ class GetoptLong
   # Returns +nil+ if there are no more options.
   #
   def get
-    option_name, option_argument = nil, ''
-
     #
     # Check status.
     #
@@ -773,6 +771,8 @@ class GetoptLong
         #
         @rest_singles = option_argument
       end
+
+      return @canonical_names[option_name], option_argument
     else
       #
       # This is a non-option argument.
@@ -780,8 +780,6 @@ class GetoptLong
       #
       return '', argument
     end
-
-    return @canonical_names[option_name], option_argument
   end
   alias get_option get
 
