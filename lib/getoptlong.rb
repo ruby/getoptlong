@@ -704,10 +704,9 @@ class GetoptLong
       @rest_singles = ''
     else
       if @ordering == PERMUTE
-        while !(argv.empty? || /\A-./.match?(argv.first))
-          @non_option_arguments.push(argv.shift)
-        end
-      elsif @ordering == REQUIRE_ORDER && !/\A-./.match?(argv.first)
+        @non_option_arguments.push(argv.shift) while /\A[^-]/.match?(argv.first)
+
+      elsif @ordering == REQUIRE_ORDER && /\A[^-]/.match?(argv.first)
         terminate
         return nil
       end
@@ -762,10 +761,7 @@ class GetoptLong
                     "option `#{argument}' requires an argument")
         end
       elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
-        unless option_argument || argv.empty? || /\A-./.match?(argv.first)
-          option_argument = argv.shift
-        end
-        option_argument ||= ''
+        option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
       elsif option_argument
         set_error(NeedlessArgument,
                   "option `#{option_name}' doesn't allow an argument")
@@ -791,10 +787,7 @@ class GetoptLong
             set_error(MissingArgument, "option requires an argument -- #{ch}")
           end
         elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
-          unless option_argument || argv.empty? || /\A-./.match?(argv.first)
-            option_argument = argv.shift
-          end
-          option_argument ||= ''
+          option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
         elsif option_argument
           @rest_singles = option_argument
         end
