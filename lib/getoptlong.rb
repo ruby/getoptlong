@@ -716,7 +716,7 @@ class GetoptLong
     #
     # Check for long and short options.
     #
-    arg_match = /\A(?:(?<end>--)|(?<option>--[^=]+)(?:=(?<option_argument>.*))?|(?<flag>-(?<char>.))(?<flag_rest>.+)?|(?<other>.*))\z/m.match(argument)
+    arg_match = /\A(?:(?<end>--)|(?<option>--[^=]+)(?:=(?<option_argument>.*))?|(?<option>-(?<char>.))(?<option_argument>.+)?|(?<other>.*))\z/m.match(argument)
 
     case arg_match
     in nil | MatchData[end: '--']
@@ -726,7 +726,7 @@ class GetoptLong
       #
       terminate
       return
-    in MatchData[option: String => option_name, option_argument:]
+    in MatchData[option: String => option_name, option_argument:, char: nil]
       #
       # This is a long style option, which start with `--'.
       #
@@ -764,8 +764,8 @@ class GetoptLong
                   "option `#{option_name}' doesn't allow an argument")
       end
 
-    in MatchData[flag: String => option_name, char: String => ch,
-                 flag_rest: option_argument]
+    in MatchData[option: String => option_name, option_argument:,
+                 char: String => char]
       #
       # This is a short style option, which start with `-' (not `--').
       # Short options may be catenated (e.g. `-l -g' is equivalent to
@@ -776,7 +776,7 @@ class GetoptLong
         # This is an invalid option.
         # 1003.2 specifies the format of this message.
         #
-        set_error(InvalidOption, "invalid option -- #{ch}")
+        set_error(InvalidOption, "invalid option -- #{char}")
       end
       #
       # The option `option_name' is found in `@canonical_names'.
@@ -787,7 +787,7 @@ class GetoptLong
 
         unless option_argument
           # 1003.2 specifies the format of this message.
-          set_error(MissingArgument, "option requires an argument -- #{ch}")
+          set_error(MissingArgument, "option requires an argument -- #{char}")
         end
       elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
         option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
