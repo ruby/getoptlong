@@ -735,18 +735,15 @@ class GetoptLong
         # The option `option_name' is not registered in `@canonical_names'.
         # It may be an abbreviated.
         #
-        matches = []
-        pattern = option_name
-        @canonical_names.each_key do |key|
-          if key.index(pattern) == 0
-            option_name = key
-            matches << key
-          end
-        end
-        if 2 <= matches.length
+        matches = @canonical_names.each_key
+                                  .select { |key| key.start_with?(option_name) }
+
+        if matches.size > 1
           set_error(AmbiguousOption, "option `#{argument}' is ambiguous between #{matches.join(', ')}")
-        elsif matches.length == 0
+        elsif matches.empty?
           set_error(InvalidOption, "unrecognized option `#{argument}'")
+        else
+          option_name = matches.first
         end
       end
 
