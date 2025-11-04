@@ -680,13 +680,8 @@ class GetoptLong
     #
     # Check status.
     #
-    return nil if @error != nil
-    case @status
-    when STATUS_YET
-      @status = STATUS_STARTED
-    when STATUS_TERMINATED
-      return nil
-    end
+    return                   if error? || terminated?
+    @status = STATUS_STARTED if @status == STATUS_YET
 
     #
     # @rest_singles might start with a '-', which would interfere with later
@@ -703,12 +698,11 @@ class GetoptLong
       argument = '-' + @rest_singles
       @rest_singles = ''
     else
+      if @ordering == REQUIRE_ORDER && /\A[^-]/.match?(argv.first)
+        terminate and return
+      end
       if @ordering == PERMUTE
         @non_option_arguments.push(argv.shift) while /\A[^-]/.match?(argv.first)
-
-      elsif @ordering == REQUIRE_ORDER && /\A[^-]/.match?(argv.first)
-        terminate
-        return nil
       end
       argument = argv.shift
     end
@@ -724,8 +718,7 @@ class GetoptLong
       # `--' indicates the end of the option list.
       # nil  indicates that argv was empty.
       #
-      terminate
-      return
+      terminate and return
     in MatchData[option: String => option_name, option_argument:, char:]
       #
       # char is `nil`:  This is a long style option, which start with `--'.
@@ -750,9 +743,8 @@ class GetoptLong
           set_error(AmbiguousOption, "option `#{argument}' is ambiguous between #{matches.join(', ')}")
         elsif matches.empty?
           set_error(InvalidOption, "unrecognized option `#{argument}'")
-        else
-          option_name = matches.first
         end
+        option_name = matches.first
       end
 
       #
