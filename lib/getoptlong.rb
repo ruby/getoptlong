@@ -684,20 +684,10 @@ class GetoptLong
     @status = STATUS_STARTED if @status == STATUS_YET
 
     #
-    # @rest_singles might start with a '-', which would interfere with later
-    # checks.
-    #
-    if @rest_singles.start_with?(?-)
-      set_error(InvalidOption, "invalid option -- -")
-    end
-
-    #
     # Get next option argument.
     #
-    if 0 < @rest_singles.length
-      argument = '-' + @rest_singles
-      @rest_singles = ''
-    else
+    case @rest_singles
+    when ''
       if @ordering == REQUIRE_ORDER && /\A[^-]/.match?(argv.first)
         terminate and return
       end
@@ -705,6 +695,15 @@ class GetoptLong
         @non_option_arguments.push(argv.shift) while /\A[^-]/.match?(argv.first)
       end
       argument = argv.shift
+    when /\A-/
+      #
+      # @rest_singles might start with a '-', which would interfere with later
+      # checks.
+      #
+      set_error(InvalidOption, "invalid option -- -")
+    else
+      argument = '-' + @rest_singles
+      @rest_singles = ''
     end
 
     #
