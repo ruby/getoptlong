@@ -675,16 +675,17 @@ class GetoptLong
   # Returns +nil+ if there are no more options.
   #
   def get
-    #
-    # Check status.
-    #
     return                   if error? || terminated?
     @status = STATUS_STARTED if @status == STATUS_YET
 
     #
-    # Get next option argument.
+    # Get next option.
     #
     case @rest_singles
+    #
+    # If `@rest_singles` is empty, we have no short style options from the last
+    # iteration left over, so we process the next argument.
+    #
     when ''
       if @ordering == REQUIRE_ORDER && /\A[^-]/.match?(argv.first)
         terminate and return
@@ -693,11 +694,11 @@ class GetoptLong
         @non_option_arguments.push(argv.shift) while /\A[^-]/.match?(argv.first)
       end
       argument = argv.shift
+    #
+    # Error if `@rest_singles` starts with a '-', because it would interfere
+    # with later checks.
+    #
     when /\A-/
-      #
-      # @rest_singles might start with a '-', which would interfere with later
-      # checks.
-      #
       set_error(InvalidOption, "invalid option -- -")
     else
       argument = '-' + @rest_singles
@@ -705,22 +706,23 @@ class GetoptLong
     end
 
     #
-    # Check for long and short options.
+    # Extract end-of-arguments, long and short options, or non-options from
+    # the argument.
     #
     arg_match = /\A(?:(?<end>--)|(?<option>--[^=]+)(?:=(?<option_argument>.*))?|(?<option>-(?<char>.))(?<option_argument>.+)?|(?<other>.*))\z/m.match(argument)
 
     case arg_match
+    #
+    # `--' indicates the end of the option list.
+    # nil  indicates that argv was empty.
+    #
     in nil | MatchData[end: '--']
-      #
-      # `--' indicates the end of the option list.
-      # nil  indicates that argv was empty.
-      #
       terminate and return
+    #
+    # char is `nil`:  This is a long style option, which start with `--'.
+    # char is String: This is a short style option, which start with `-'.
+    #
     in MatchData[option: String => option_name, option_argument:, char:]
-      #
-      # char is `nil`:  This is a long style option, which start with `--'.
-      # char is String: This is a short style option, which start with `-'.
-      #
       long_option = char.nil?
       unless @canonical_names.include?(option_name)
         #
@@ -731,7 +733,7 @@ class GetoptLong
 
         #
         # The option `option_name' is not registered in `@canonical_names'.
-        # It may be an abbreviated.
+        # It may be an abbreviation.
         #
         matches = @canonical_names.each_key
                                   .select { |key| key.start_with?(option_name) }
@@ -745,7 +747,7 @@ class GetoptLong
       end
 
       #
-      # Check an argument to the option.
+      # Process a possible argument to the option.
       #
       if @argument_flags[option_name] == REQUIRED_ARGUMENT
         option_argument ||= argv.shift
@@ -760,6 +762,9 @@ class GetoptLong
         end
       elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
         option_argument ||= /\A[^-]/.match?(argv.first) ? argv.shift : ''
+      #
+      # The only option left is NO_ARGUMENT. Error if one was given.
+      #
       elsif option_argument
         if long_option
           set_error(NeedlessArgument,
@@ -775,8 +780,7 @@ class GetoptLong
       return @canonical_names[option_name], option_argument
     else
       #
-      # This is a non-option argument.
-      # Only RETURN_IN_ORDER fell into here.
+      # This is a non-option argument. Only RETURN_IN_ORDER fell into here.
       #
       return '', argument
     end
