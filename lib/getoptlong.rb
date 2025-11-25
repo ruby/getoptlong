@@ -395,6 +395,8 @@ class GetoptLong
   class MissingArgument  < Error; end
   class InvalidOption    < Error; end
 
+  attr_accessor :argv, :env
+
   #
   # Returns a new \GetoptLong object based on the given +arguments+.
   # See {Options}[#class-GetoptLong-label-Options].
@@ -409,11 +411,11 @@ class GetoptLong
   # - Any option name or alias is not a string.
   # - Any option type is invalid.
   #
-  def initialize(*arguments)
+  def initialize(*arguments, argv: ARGV, env: ENV)
     #
     # Current ordering.
     #
-    if ENV.include?('POSIXLY_CORRECT')
+    if env.include?('POSIXLY_CORRECT')
       @ordering = REQUIRE_ORDER
     else
       @ordering = PERMUTE
@@ -467,6 +469,9 @@ class GetoptLong
     if 0 < arguments.length
       set_options(*arguments)
     end
+
+    self.argv = argv
+    self.env  = env
   end
 
   # Sets the ordering; see {Ordering}[#class-GetoptLong-label-Ordering];
@@ -502,7 +507,7 @@ class GetoptLong
     if !ORDERINGS.include?(ordering)
       raise ArgumentError, "invalid ordering `#{ordering}'"
     end
-    if ordering == PERMUTE && ENV.include?('POSIXLY_CORRECT')
+    if ordering == PERMUTE && env.include?('POSIXLY_CORRECT')
       @ordering = REQUIRE_ORDER
     else
       @ordering = ordering
@@ -614,9 +619,7 @@ class GetoptLong
     raise RuntimeError, "an error has occurred" if @error != nil
 
     @status = STATUS_TERMINATED
-    @non_option_arguments.reverse_each do |argument|
-      ARGV.unshift(argument)
-    end
+    argv.unshift(*@non_option_arguments)
 
     @canonical_names = nil
     @argument_flags = nil
@@ -690,26 +693,26 @@ class GetoptLong
     #
     if 0 < @rest_singles.length
       argument = '-' + @rest_singles
-    elsif (ARGV.length == 0)
+    elsif argv.empty?
       terminate
       return nil
     elsif @ordering == PERMUTE
-      while 0 < ARGV.length && ARGV[0] !~ /\A-./
-        @non_option_arguments.push(ARGV.shift)
+      while !(argv.empty? || /\A-./.match?(argv.first))
+        @non_option_arguments.push(argv.shift)
       end
-      if ARGV.length == 0
+      if argv.empty?
         terminate
         return nil
       end
-      argument = ARGV.shift
+      argument = argv.shift
     elsif @ordering == REQUIRE_ORDER
-      if (ARGV[0] !~ /\A-./)
+      unless /\A-./.match?(argv.first)
         terminate
         return nil
       end
-      argument = ARGV.shift
+      argument = argv.shift
     else
-      argument = ARGV.shift
+      argument = argv.shift
     end
 
     #
@@ -756,8 +759,8 @@ class GetoptLong
       if @argument_flags[option_name] == REQUIRED_ARGUMENT
         if argument =~ /=(.*)/m
           option_argument = $1
-        elsif 0 < ARGV.length
-          option_argument = ARGV.shift
+        elsif !argv.empty?
+          option_argument = argv.shift
         else
           set_error(MissingArgument,
                     "option `#{argument}' requires an argument")
@@ -765,8 +768,8 @@ class GetoptLong
       elsif @argument_flags[option_name] == OPTIONAL_ARGUMENT
         if argument =~ /=(.*)/m
           option_argument = $1
-        elsif 0 < ARGV.length && ARGV[0] !~ /\A-./
-          option_argument = ARGV.shift
+        elsif !(argv.empty? || /\A-./.match?(argv.first))
+          option_argument = argv.shift
         else
           option_argument = ''
         end
@@ -792,8 +795,8 @@ class GetoptLong
           if 0 < @rest_singles.length
             option_argument = @rest_singles
             @rest_singles = ''
-          elsif 0 < ARGV.length
-            option_argument = ARGV.shift
+          elsif !argv.empty?
+            option_argument = argv.shift
           else
             # 1003.2 specifies the format of this message.
             set_error(MissingArgument, "option requires an argument -- #{ch}")
@@ -802,8 +805,8 @@ class GetoptLong
           if 0 < @rest_singles.length
             option_argument = @rest_singles
             @rest_singles = ''
-          elsif 0 < ARGV.length && ARGV[0] !~ /\A-./
-            option_argument = ARGV.shift
+          elsif !(argv.empty? || /\A-./.match?(argv.first))
+            option_argument = argv.shift
           else
             option_argument = ''
           end
