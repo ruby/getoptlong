@@ -3,27 +3,27 @@ require 'getoptlong'
 
 class TestGetoptLong < Test::Unit::TestCase
 
-  def verify(test_argv, expected_remaining_argv, expected_options)
-    # Save ARGV and replace it with a test ARGV.
-    argv_saved = ARGV.dup
-    ARGV.replace(test_argv)
-    # Define options.
-    opts = GetoptLong.new(
+  def getoptlong_new(argv)
+    GetoptLong.new(
       ['--xxx', '-x', '--aaa', '-a', GetoptLong::REQUIRED_ARGUMENT],
       ['--yyy', '-y', '--bbb', '-b', GetoptLong::OPTIONAL_ARGUMENT],
-      ['--zzz', '-z', '--ccc', '-c', GetoptLong::NO_ARGUMENT]
+      ['--zzz', '-z', '--ccc', '-c', GetoptLong::NO_ARGUMENT],
+      argv:
     )
+  end
+
+  def verify(test_argv, expected_remaining_argv, expected_options)
+    # Define options.
+    opts = getoptlong_new(test_argv)
     opts.quiet = true
     # Gather options.
     actual_options = []
     opts.each do |opt, arg|
       actual_options << "#{opt}: #{arg}"
     end
-    # Save remaining test ARGV and restore original ARGV.
-    actual_remaining_argv = ARGV.dup
-    ARGV.replace(argv_saved)
+
     # Assert.
-    assert_equal(expected_remaining_argv, actual_remaining_argv, 'ARGV')
+    assert_equal(expected_remaining_argv, test_argv, 'ARGV')
     assert_equal(expected_options, actual_options, 'Options')
   end
 
