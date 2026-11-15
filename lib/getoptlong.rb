@@ -593,7 +593,7 @@ class GetoptLong
   #
   # Sets quiet mode and returns the given argument:
   #
-  # - When +false+ or +nil+, error messages are written to <tt>$stdout</tt>.
+  # - When +false+ or +nil+, error messages are written to <tt>$stderr</tt>.
   # - Otherwise, error messages are not written.
   #
   attr_writer :quiet
